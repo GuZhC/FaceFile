@@ -7,7 +7,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.RadioButton;
 
-import com.ps.xh.facefile.MainActivity;
+import com.ps.xh.facefile.main.MainActivity;
 import com.ps.xh.facefile.R;
 import com.ps.xh.facefile.base.BaseActivity;
 import com.ps.xh.facefile.utils.SPUtils;
@@ -127,6 +127,7 @@ public class LoginActivity extends BaseActivity {
                     BmobUser user = BmobUser.getCurrentUser(BmobUser.class);
                     SPUtils.save(LoginActivity.this,"USER","PHONE",mPhone);
                     startAct(MainActivity.class);
+                    finish();
                 } else {
                     toast("登录失败");
                 }
