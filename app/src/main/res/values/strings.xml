@@ -43,7 +43,7 @@
     <!--Login-->
     <string name="login_dummy">FaceFile</string>
     <string name="login">登录</string>
-    <string name="email">用户名</string>
+    <string name="email">手机号</string>
     <string name="password">密码</string>
 
     <!--Login Validation-->
@@ -83,4 +83,5 @@
     <string name="empty_screen">We do not have anything\nhere right now.</string>
     <string name="please_retry">Please Retry</string>
     <string name="retry">Retry</string>
+    <string name="register">注册</string>
 </resources>
