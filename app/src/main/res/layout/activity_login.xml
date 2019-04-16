@@ -1,9 +1,150 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activityMain"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/bg_design"
     tools:context=".LoginActivity">
 
-</android.support.constraint.ConstraintLayout>
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="80dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="80dp"
+        app:cardCornerRadius="7dp"
+        app:cardElevation="22dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center|top"
+            android:layout_marginTop="60dp"
+            android:text="@string/login_dummy"
+            android:textAllCaps="true"
+            android:textSize="20sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_margin="20dp"
+            android:orientation="vertical">
+
+            <RadioGroup
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="20dp"
+                android:gravity="center_horizontal"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/rbLogin"
+                    android:layout_width="70dp"
+                    android:layout_height="30dp"
+                    android:background="@drawable/select_rb_login"
+                    android:button="@null"
+                    android:checked="true"
+                    android:gravity="center"
+                    android:text="登录"
+                    android:textColor="@color/white"
+                    android:textSize="14sp" />
+
+
+                <RadioButton
+                    android:id="@+id/rbRegister"
+                    android:layout_width="60dp"
+                    android:layout_height="30dp"
+                    android:background="@drawable/select_rb_login"
+                    android:button="@null"
+                    android:textSize="14sp"
+                    android:checked="false"
+                    android:gravity="center"
+                    android:text="注册" />
+
+            </RadioGroup>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColorHint="@color/gray"
+                app:hintTextAppearance="@style/TextAppearence.App.TextInputLayout">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/phone"
+                    style="@style/TextStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="20dp"
+                    android:layout_marginRight="20dp"
+                    android:background="@drawable/input_border_bottom"
+                    android:cursorVisible="true"
+                    android:gravity="center|left|bottom"
+                    android:hint="@string/email"
+                    android:inputType="textEmailAddress"
+                    android:maxLength="50"
+                    android:paddingBottom="10dp"
+                    android:textColor="@color/black_effective"
+                    android:textSize="18sp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/password"
+                android:textColorHint="@color/gray"
+                app:hintTextAppearance="@style/TextAppearence.App.TextInputLayout"
+                app:passwordToggleEnabled="true">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etPassword"
+                    style="@style/TextStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="20dp"
+                    android:layout_marginTop="30dp"
+                    android:layout_marginRight="20dp"
+                    android:background="@drawable/input_border_bottom"
+                    android:cursorVisible="true"
+                    android:gravity="center|left|bottom"
+                    android:inputType="textPassword"
+                    android:maxLength="50"
+                    android:paddingBottom="10dp"
+                    android:textColor="@color/black_effective"
+                    android:textSize="18sp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <Button
+                android:id="@+id/btnServerLogin"
+                style="@style/Button.Primary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginLeft="15dp"
+                android:layout_marginTop="50dp"
+                android:layout_marginRight="15dp"
+                android:layout_marginBottom="20dp"
+                android:padding="10dp"
+                android:text="@string/login"
+                android:textSize="18dp" />
+
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center"
+            android:layout_marginBottom="40dp"
+            android:orientation="horizontal">
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+</RelativeLayout>
