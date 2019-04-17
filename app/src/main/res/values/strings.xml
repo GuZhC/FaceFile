@@ -84,4 +84,6 @@
     <string name="please_retry">Please Retry</string>
     <string name="retry">Retry</string>
     <string name="register">注册</string>
+    <string name="lock">加密文件</string>
+    <string name="face">面部识别</string>
 </resources>

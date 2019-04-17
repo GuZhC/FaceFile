@@ -6,11 +6,21 @@
             <!--android:checked="true"-->
             <!--android:icon="@drawable/ic_info_24px"-->
             <!--android:title="@string/about" />-->
+        <item
+            android:id="@+id/navItemface"
+            android:checked="true"
+            android:icon="@mipmap/icon_face"
+            android:title="@string/face" />
 
+        <item
+            android:id="@+id/navItemLock"
+            android:checked="true"
+            android:icon="@mipmap/icon_lock"
+            android:title="@string/lock" />
         <item
             android:id="@+id/navItemLogout"
             android:checked="true"
-            android:icon="@drawable/ic_power_settings_new_24px"
+            android:icon="@mipmap/icon_loginout"
             android:title="@string/logout" />
     </group>
 </menu>

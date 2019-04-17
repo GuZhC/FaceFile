@@ -8,14 +8,39 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
     tools:openDrawer="start">
-    <!--这里是主视图-->
-    <include
-        layout="@layout/app_bar_main"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:background="@color/white"
+        android:layout_height="match_parent">
+
+        <RelativeLayout
+            android:id="@+id/main_rl_empty"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <ImageView
+                android:id="@+id/main_img_empty"
+                android:layout_width="100dp"
+                android:src="@mipmap/icon_empty"
+                android:layout_centerInParent="true"
+                android:layout_height="100dp" />
+            <TextView
+                android:id="@+id/main_tv_chose"
+                android:layout_below="@id/main_img_empty"
+                android:layout_centerHorizontal="true"
+                android:padding="10dp"
+                android:textColor="@color/fb"
+                android:textSize="14sp"
+                android:layout_width="wrap_content"
+                android:text="暂无文件点击选择"
+                android:layout_gravity="center"
+                android:layout_height="wrap_content" />
+        </RelativeLayout>
+
+    </RelativeLayout>
 
     <android.support.design.widget.NavigationView
         android:id="@+id/navigationView"
+        android:visibility="gone"
         style="@style/Widget.Design.NavigationView"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
@@ -24,16 +49,10 @@
         app:itemBackground="@color/white"
         app:itemIconTint="@color/black_effective"
         app:itemTextColor="@color/black_effective"
+        app:headerLayout="@layout/nav_header_main"
         app:menu="@menu/drawer">
 
-        <TextView
-            android:id="@+id/tvAppVersion"
-            style="@style/TextStyle.Title.Sub"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|end"
-            android:padding="5dp"
-            android:text="@{viewModel.appVersion}" />
+
     </android.support.design.widget.NavigationView>
 
 </android.support.v4.widget.DrawerLayout>

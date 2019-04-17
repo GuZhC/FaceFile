@@ -128,8 +128,10 @@ public class LoginActivity extends BaseActivity {
                     SPUtils.save(LoginActivity.this,"USER","PHONE",mPhone);
                     startAct(MainActivity.class);
                     finish();
+                }else if (e.getErrorCode() ==101){
+                    toast("帐号或密码错误");
                 } else {
-                    toast("登录失败");
+                    toast("登录失败"+e.getMessage());
                 }
             }
         });
