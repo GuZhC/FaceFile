@@ -88,4 +88,8 @@
     <string name="face">面部识别</string>
     <string name="no_sd_out">退出检查</string>
     <string name="no_p_out">退出</string>
+    <string name="dolog_lock_file">加密</string>
+    <string name="dolog_look_file">查看</string>
+    <string name="dolog_lock_file_no">取消</string>
+    <string name="dolog_lock_file_sure">确定</string>
 </resources>

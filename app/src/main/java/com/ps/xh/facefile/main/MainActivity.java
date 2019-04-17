@@ -2,23 +2,30 @@ package com.ps.xh.facefile.main;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
+import android.support.v4.content.FileProvider;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.ps.xh.facefile.R;
 import com.ps.xh.facefile.base.BaseActivity;
 import com.ps.xh.facefile.login.LoginActivity;
@@ -44,11 +51,21 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
     TextView mainTvChose;
     @BindView(R.id.main_rl_empty)
     RelativeLayout mainRlEmpty;
+    @BindView(R.id.img_main_menu)
+    ImageView imgMainMenu;
+    @BindView(R.id.img_main_add)
+    ImageView imgMainAdd;
+    @BindView(R.id.ll_main_toolbar)
+    LinearLayout llMainToolbar;
+    @BindView(R.id.recycler_main)
+    RecyclerView recyclerMain;
     private ArrayList<String> docPaths;
     private TextView name;
     private String LockPath;
     private static final int CHOOSE_FILE_CODE = 0;
     private static final String TAG1 = "FileChoose";
+    private List<FileBean> mData;
+    private LockFileAdapter adapter;
 
     @Override
     protected int addContentView() {
@@ -59,7 +76,6 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
     protected void initView() {
         setupNavMenu();
         initLockFile();
-
     }
 
 
@@ -74,26 +90,140 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         LockPath = sdPath + "/faceFile/lockFile";
 //        Log.e(TAG1, "LockPath: " + LockPath);
         FileUtils.createOrExistsDir(LockPath);
-        List<File> sdLockFiles = FileUtils.listFilesInDir(LockPath);
-        if (sdLockFiles.size() <= 0) {
-            toast("暂无加密文件");
-        }
+        updateLockFile();
     }
 
+    /**
+     * 更新加密文件
+     */
+    private void updateLockFile() {
+        List<File> sdLockFiles = FileUtils.listFilesInDir(LockPath);
+        if (sdLockFiles.size() <= 0) {
+            mainRlEmpty.setVisibility(View.VISIBLE);
+            recyclerMain.setVisibility(View.GONE);
+            return;
+        }
+        mData = new ArrayList<>();
+        for (File file : sdLockFiles) {
+            FileBean fileBean = new FileBean();
+            String fileAbsolutePath = file.getAbsolutePath();
+            String fileName = FileUtils.getFileName(fileAbsolutePath);
+            int dotIndex = fileName.lastIndexOf(".");
+            String end = fileName.substring(dotIndex, fileName.length()).toLowerCase();
+            if (dotIndex < 0 || !TextUtils.equals(end, "facefile")) {
+                fileBean.setLock(false);
+            } else {
+                fileBean.setLock(true);
+            }
+            fileBean.setName(fileName);
+            fileBean.setPath(fileAbsolutePath);
+            mData.add(fileBean);
+        }
+        mainRlEmpty.setVisibility(View.GONE);
+        recyclerMain.setVisibility(View.VISIBLE);
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+            return;
+        }
+        recyclerMain.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new LockFileAdapter(mData);
+        recyclerMain.setAdapter(adapter);
+        //长按
+        adapter.setOnItemLongClickListener(new BaseQuickAdapter.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(BaseQuickAdapter adapter, View view, final int position) {
+                AlertDialog versionDialog = new AlertDialog.Builder(MainActivity.this).setTitle("删除").setMessage(
+                        "确定删除？").setPositiveButton(getString(R.string.dolog_lock_file_sure),
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                if (FileUtils.delete(mData.get(position).getPath())){
+                                    updateLockFile();
+                                }else {
+                                    toast("删除失败");
+                                }
+                            }
+                        }).setNegativeButton(getString(R.string.dolog_lock_file_no),
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        }).create();
+                versionDialog.setCanceledOnTouchOutside(true);
+                versionDialog.setCancelable(true);
+                versionDialog.show();
+                return false;
+            }
+        });
+//        点击
+        adapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
+                final FileBean fileBean = mData.get(position);
+                if (fileBean.isLock()) {
+                    toast("解密");
+                } else {
+                    AlertDialog versionDialog = new AlertDialog.Builder(MainActivity.this).setTitle("提示").setMessage(
+                            "请选择要进行的操作。").setPositiveButton(getString(R.string.dolog_lock_file),
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    toast("加密");
+                                }
+                            }).setNegativeButton(getString(R.string.dolog_look_file),
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    openFile(MainActivity.this, fileBean.getPath());
+                                }
+                            }).create();
+                    versionDialog.setCanceledOnTouchOutside(true);
+                    versionDialog.setCancelable(true);
+                    versionDialog.show();
+                }
+            }
+        });
+    }
+
+    public void openFile(Context context, String path) {
+        try {
+            Intent intent = new Intent();
+            intent.setAction(Intent.ACTION_VIEW);
+            Uri uri;
+            File file = new File(path);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                //FileProvider.getUriForFile();第一个参数是context.
+                // 第二个值。比较关键、这个也就是我们在manifest里面的provider里面的
+                //android:authorities="com.example.zongm.testapplication.provider"
+                //因为我用的就是AppId.所以。这里就直接用BuildConfig.APPLICATION_ID了。
+                //如果你的android:authorities="test.provider"。那这里第二个参数就应该是test.provider
+                uri = FileProvider.getUriForFile(context, "com.ps.xh.facefile.provider", file);
+//                uri = FileProvider.getUriForFile(getApplicationContext(), BuildConfig.APPLICATION_ID + ".provider", file);
+            } else {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                uri = Uri.fromFile(file);
+            }
+            intent.setDataAndType(uri, MapTable.getMIMEType(path));
+            context.startActivity(intent);
+            Intent.createChooser(intent, "请选择对应的软件打开该附件！");
+        } catch (ActivityNotFoundException e) {
+            toast("sorry附件不能打开，请下载相关软件！");
+        }
+    }
     /**
      * 没有Sd卡
      */
     private void hintNoSd() {
         AlertDialog versionDialog = new AlertDialog.Builder(this).setTitle("提示").setMessage(
                 "亲，木有检测到sd" +
-                "卡啊-_-!!").setPositiveButton(getString(R.string.no_sd_out),
+                        "卡啊-_-!!").setPositiveButton(getString(R.string.no_sd_out),
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         finish();
                     }
                 }).create();
-
         versionDialog.setOnDismissListener(this);
         versionDialog.setCanceledOnTouchOutside(false);
         versionDialog.setCancelable(false);
@@ -107,7 +237,9 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         navigationView.setNavigationItemSelectedListener(this);
         View headView = navigationView.getHeaderView(0);
         name = headView.findViewById(R.id.tv_name);
-        name.setText(SPUtils.read(this, "USER", "PHONE"));
+        String name = SPUtils.read(this, "USER", "PHONE");
+        if (TextUtils.isEmpty(name)) startAct(LoginActivity.class);
+        this.name.setText(name);
     }
 
     /**
@@ -122,7 +254,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                 finish();
                 return true;
             case R.id.navItemLock:
-                toast("lock");
+                choseFile();
                 return true;
             case R.id.navItemface:
                 toast("navItemface");
@@ -132,12 +264,20 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         }
     }
 
-
-    @OnClick(R.id.main_tv_chose)
-    public void onViewClicked() {
-        choseFile();
+    @OnClick({R.id.img_main_menu, R.id.img_main_add, R.id.main_tv_chose})
+    public void onViewClicked(View view) {
+        switch (view.getId()) {
+            case R.id.img_main_menu:
+                drawerLayout.openDrawer(GravityCompat.START);
+                break;
+            case R.id.img_main_add:
+                choseFile();
+                break;
+            case R.id.main_tv_chose:
+                choseFile();
+                break;
+        }
     }
-
     /**
      * @return 根目录
      */
@@ -145,7 +285,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         File sdDir = null;
         //判断sd卡是否存在
         boolean sdCardExist = Environment.getExternalStorageState()
-                .equals(android.os.Environment.MEDIA_MOUNTED);
+                .equals(Environment.MEDIA_MOUNTED);
         if (!sdCardExist) {
             return "";
         }
@@ -175,8 +315,8 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             if (requestCode == CHOOSE_FILE_CODE) {
                 //得到uri，后面就是将uri转化成file的过程。
                 Uri uri = data.getData();
-                String chosePath = FileUtils.getPath(this,uri);
-                Log.e("path", ":"+chosePath);
+                String chosePath = FileUtils.getPath(this, uri);
+                Log.e("path", ":" + chosePath);
                 copyAndLockFile(chosePath);
             }
         } else {
@@ -192,22 +332,25 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
      */
     private void copyAndLockFile(String chosePath) {
         showLoding();
-        FileCopy.getInstance(this).copyAssetsToSD(chosePath,LockPath+"/"+FileUtils.getFileName(chosePath))
+        FileCopy.getInstance(this).copyAssetsToSD(chosePath, LockPath + "/" + FileUtils.getFileName(chosePath))
                 .setFileOperateCallback(new FileCopy.FileOperateCallback() {
-            @Override
-            public void onSuccess() {
-                //  文件复制成功时，主线程回调
-                toast("成功");
-                hideLoading();
-            }
+                    @Override
+                    public void onSuccess() {
+                        //  文件复制成功时，主线程回调
+                        toast("成功");
+                        hideLoading();
+                        //todo 加密
+                        toast("数据待加密");
+                        updateLockFile();
+                    }
 
-            @Override
-            public void onFailed(String error) {
-                //  文件复制失败时，主线程回调
-                toast("失败");
-                hideLoading();
-            }
-        });
+                    @Override
+                    public void onFailed(String error) {
+                        //  文件复制失败时，主线程回调
+                        toast("失败");
+                        hideLoading();
+                    }
+                });
     }
 
     @Override
