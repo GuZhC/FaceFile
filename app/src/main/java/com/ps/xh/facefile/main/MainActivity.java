@@ -177,14 +177,6 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                 Uri uri = data.getData();
                 String chosePath = FileUtils.getPath(this,uri);
                 Log.e("path", ":"+chosePath);
-//                showLoding();
-//                FileUtils.copyDir(chosePath, LockPath, new FileUtils.OnReplaceListener() {
-//                    @Override
-//                    public boolean onReplace() {
-////                        hideLoading();
-//                        return true;
-//                    }
-//                });
                 copyAndLockFile(chosePath);
             }
         } else {
@@ -204,14 +196,14 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                 .setFileOperateCallback(new FileCopy.FileOperateCallback() {
             @Override
             public void onSuccess() {
-                // TODO: 文件复制成功时，主线程回调
+                //  文件复制成功时，主线程回调
                 toast("成功");
                 hideLoading();
             }
 
             @Override
             public void onFailed(String error) {
-                // TODO: 文件复制失败时，主线程回调
+                //  文件复制失败时，主线程回调
                 toast("失败");
                 hideLoading();
             }
