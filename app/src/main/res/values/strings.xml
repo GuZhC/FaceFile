@@ -86,4 +86,6 @@
     <string name="register">注册</string>
     <string name="lock">加密文件</string>
     <string name="face">面部识别</string>
+    <string name="no_sd_out">退出检查</string>
+    <string name="no_p_out">退出</string>
 </resources>

@@ -33,9 +33,8 @@ dependencies {
     implementation 'com.android.support:recyclerview-v7:28.0.0'
     implementation 'com.android.support:design:28.0.0'
     implementation 'de.hdodenhof:circleimageview:3.0.0'
-
-    //file
-    compile  'com.droidninja:filepicker:2.2.0'
+    //权限管理
+    implementation 'com.github.tbruyelle:rxpermissions:0.10.2'
     //butterknife
     implementation 'com.jakewharton:butterknife:8.8.1'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'

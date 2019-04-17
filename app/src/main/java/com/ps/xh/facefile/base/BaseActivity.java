@@ -11,6 +11,7 @@ import com.ps.xh.facefile.utils.ToastUtil;
 
 import butterknife.ButterKnife;
 
+
 public abstract class BaseActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -19,6 +20,15 @@ public abstract class BaseActivity extends AppCompatActivity {
         ButterKnife.bind(this);
         LoadingUtils.onDestory();
         initView();
+        initData();
+    }
+
+
+    /**
+     * 初始化数据
+     */
+    public void initData() {
+
     }
 
     @LayoutRes
