@@ -3,6 +3,7 @@ package com.ps.xh.facefile.face;
 import android.net.Uri;
 import android.os.Environment;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -26,6 +27,7 @@ import cn.bmob.v3.BmobUser;
 import cn.bmob.v3.datatype.BmobFile;
 import cn.bmob.v3.exception.BmobException;
 import cn.bmob.v3.listener.UpdateListener;
+import cn.bmob.v3.listener.UploadBatchListener;
 import cn.bmob.v3.listener.UploadFileListener;
 
 public class FaceAddActivity extends BaseActivity {
@@ -58,6 +60,7 @@ public class FaceAddActivity extends BaseActivity {
     private String faceFile;
     private List<String> userFace;
     private List<ImageView> imageViews;
+    int wht = 0;
 
     @Override
     protected int addContentView() {
@@ -75,16 +78,14 @@ public class FaceAddActivity extends BaseActivity {
         userFace = userManager.getUserFace();
         if (userFace.size() > 0) {
             for (int i = 0; i < 3; i++) {
-                if (TextUtils.isEmpty(userFace.get(i))){
-                    return;
+                if (!TextUtils.isEmpty(userFace.get(i))){
+                    Glide.with(this).load(userFace.get(i)).placeholder(R.mipmap.pic_ing).into(imageViews.get(i));
                 }
-                Glide.with(this).load(userFace.get(i)).into(imageViews.get(i));
             }
         }
     }
 
 
-    int wht = 0;
 
     @OnClick({R.id.img_face_happy, R.id.img_face_sad, R.id.img_face_normal, R.id.img_addface_back
             , R.id.tv_addface_save})
@@ -150,22 +151,51 @@ public class FaceAddActivity extends BaseActivity {
     private void postFile(String originalPath) {
         showLoding();
         final BmobFile bmobFile = new BmobFile(new File(originalPath));
-        bmobFile.uploadblock(new UploadFileListener() {
+//        bmobFile.uploadblock(new UploadFileListener() {
+//            @Override
+//            public void done(BmobException e) {
+//                if (e == null) {
+//                    //bmobFile.getFileUrl()--返回的上传文件的完整地址
+//                    saveUrl(bmobFile.getFileUrl());
+//                } else {
+//                    hideLoading();
+//                    toast("上传文件失败：" + e.getMessage());
+//                    Log.e("upfile",e.getErrorCode()+e.getMessage());
+//                }
+//
+//            }
+//
+//            @Override
+//            public void onProgress(Integer value) {
+//                // 返回的上传进度（百分比）
+//            }
+//        });
+        //详细示例可查看BmobExample工程中BmobFileActivity类
+        final String[] filePaths = new String[1];
+        filePaths[0] = originalPath;
+        BmobFile.uploadBatch(filePaths, new UploadBatchListener() {
             @Override
-            public void done(BmobException e) {
-                if (e == null) {
-                    //bmobFile.getFileUrl()--返回的上传文件的完整地址
-                    saveUrl(bmobFile.getFileUrl());
-                } else {
-                    hideLoading();
-                    toast("上传文件失败：" + e.getMessage());
+            public void onSuccess(List<BmobFile> files,List<String> urls) {
+                //1、files-上传完成后的BmobFile集合，是为了方便大家对其上传后的数据进行操作，例如你可以将该文件保存到表中
+                //2、urls-上传文件的完整url地址
+                if(urls.size()==filePaths.length){//如果数量相等，则代表文件全部上传完成
+                    //do something
+                    saveUrl(urls.get(0));
                 }
-
             }
 
             @Override
-            public void onProgress(Integer value) {
-                // 返回的上传进度（百分比）
+            public void onError(int statuscode, String errormsg) {
+                toast("上传文件失败：" + errormsg);
+                    Log.e("upfile",statuscode+errormsg);
+            }
+
+            @Override
+            public void onProgress(int curIndex, int curPercent, int total,int totalPercent) {
+                //1、curIndex--表示当前第几个文件正在上传
+                //2、curPercent--表示当前上传文件的进度值（百分比）
+                //3、total--表示总的上传文件数
+                //4、totalPercent--表示总的上传进度（百分比）
             }
         });
     }

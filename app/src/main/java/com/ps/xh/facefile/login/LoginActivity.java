@@ -198,6 +198,7 @@ public class LoginActivity extends BaseActivity implements DialogInterface.OnDis
      */
     private void loginSucess(UserBean userBean, String mPhone) {
         UserManager.getInstance().setUserBean(userBean);
+        SPUtils.save(LoginActivity.this, "USER", "PHONE", mPhone);
         if (userBean.getFaceUrl() != null&&userBean.getFaceUrl().size() >= 3) {
             for (String url: userBean.getFaceUrl()) {
                 if (TextUtils.isEmpty(url)) {
@@ -212,7 +213,6 @@ public class LoginActivity extends BaseActivity implements DialogInterface.OnDis
             startAct(FaceAddActivity.class);
             finish();
         }
-        SPUtils.save(LoginActivity.this, "USER", "PHONE", mPhone);
         finish();
     }
 
