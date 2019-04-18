@@ -11,10 +11,9 @@ import java.nio.channels.FileChannel;
  * 加密文件
  */
 public class LockFileHelper {
-    /**
-     * 加密后的文件的后缀
-     */
     public static final String CIPHER_TEXT_SUFFIX = ".facefile";
+    public static final String CIPHER_TEXT_SUFFIX2 = ".facefiless";
+
 
     /**
      * 加解密时以32K个字节为单位进行加解密计算
@@ -25,8 +24,10 @@ public class LockFileHelper {
      */
     private static final int CIPHER_BUFFER_LENGHT = 32 * 1024;
 
-    public static boolean encrypt(String filePath, CipherListener listener) {
+    public static boolean encrypt(int watLock, String filePath, CipherListener listener) {
+
         try {
+
             long startTime = System.currentTimeMillis();
             File f = new File(filePath);
             RandomAccessFile raf = new RandomAccessFile(f, "rw");
@@ -81,7 +82,11 @@ public class LockFileHelper {
             raf.close();
 
             //对加密后的文件重命名，增加.facefile后缀
-            f.renameTo(new File(f.getPath() + CIPHER_TEXT_SUFFIX));
+            String endPath = CIPHER_TEXT_SUFFIX;
+            if (watLock == MainActivity.FILE_LOCK_2){
+                endPath = CIPHER_TEXT_SUFFIX2;
+            }
+            f.renameTo(new File(f.getPath() + endPath));
             Log.d("加密用时：", (System.currentTimeMillis() - startTime) / 1000 + "s");
             return true;
         } catch (Exception e) {
@@ -94,13 +99,14 @@ public class LockFileHelper {
      * 解密，这里主要是演示加密的原理，没有用什么实际的加密算法
      *
      * @param filePath 密文文件绝对路径，文件需要以.facefile结尾才会认为其实可解密密文
+     * @param watLock
      * @return
      */
-    public static boolean decrypt(String filePath, CipherListener listener) {
+    public static boolean decrypt(String filePath, CipherListener listener, int watLock) {
         try {
             long startTime = System.currentTimeMillis();
             File f = new File(filePath);
-            if (!f.getPath().toLowerCase().endsWith(CIPHER_TEXT_SUFFIX)) {
+            if (!f.getPath().toLowerCase().endsWith(CIPHER_TEXT_SUFFIX)&&!f.getPath().toLowerCase().endsWith(CIPHER_TEXT_SUFFIX2)) {
                 //后缀不同，认为是不可解密的密文
                 return false;
             }
@@ -156,7 +162,11 @@ public class LockFileHelper {
             channel.close();
             raf.close();
             //对加密后的文件重命名，增加.facefile后缀
-            f.renameTo(new File(f.getPath().replace(CIPHER_TEXT_SUFFIX,"")));
+            String endPath = CIPHER_TEXT_SUFFIX;
+            if (watLock == MainActivity.FILE_LOCK_2){
+                endPath = CIPHER_TEXT_SUFFIX2;
+            }
+            f.renameTo(new File(f.getPath().replace(endPath,"")));
             Log.d("解密用时：", (System.currentTimeMillis() - startTime) / 1000 + "s");
             return true;
         } catch (Exception e) {

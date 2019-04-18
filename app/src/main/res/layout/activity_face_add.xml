@@ -39,10 +39,9 @@
                 android:layout_height="match_parent"
                 android:layout_marginRight="10dp"
                 android:gravity="center_vertical"
-                android:text="保存"
+                android:text="完成"
                 android:textColor="@color/white"
-                android:textSize="18sp"
-                android:visibility="invisible" />
+                android:textSize="18sp" />
         </LinearLayout>
 
     <android.support.v4.widget.NestedScrollView
@@ -147,6 +146,64 @@
 
             <ImageView
                 android:id="@+id/img_face_normal"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:minWidth="100dp"
+                android:minHeight="100dp"
+                android:scaleType="fitCenter"
+                android:src="@mipmap/icon_face_add" />
+        </LinearLayout>
+
+            <LinearLayout
+            android:id="@+id/ll_face_4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="20dp"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_face_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="6dp"
+                android:text="心平气和"
+                android:textColor="@color/black"
+                android:textSize="16sp" />
+
+            <ImageView
+                android:id="@+id/img_face_4"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:minWidth="100dp"
+                android:minHeight="100dp"
+                android:scaleType="fitCenter"
+                android:src="@mipmap/icon_face_add" />
+        </LinearLayout>
+
+            <LinearLayout
+            android:id="@+id/ll_face_5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="20dp"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_face_5"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="6dp"
+                android:text="心平气和"
+                android:textColor="@color/black"
+                android:textSize="16sp" />
+
+            <ImageView
+                android:id="@+id/img_face_5"
                 android:layout_width="200dp"
                 android:layout_height="200dp"
                 android:minWidth="100dp"

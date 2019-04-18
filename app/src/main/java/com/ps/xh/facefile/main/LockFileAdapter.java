@@ -16,7 +16,7 @@ public class LockFileAdapter extends BaseQuickAdapter<FileBean, BaseViewHolder> 
     @Override
     protected void convert(BaseViewHolder helper, FileBean item) {
         helper.setText(R.id.img_item_recycler_neme,item.getName());
-        if (item.isLock()){
+        if (item.getIsLock() != 0){
             helper.setImageResource(R.id.img_item_recycler_file,R.mipmap.icon_item_lock);
         }else {
             helper.setImageResource(R.id.img_item_recycler_file,R.mipmap.icon_main_file_nolock);

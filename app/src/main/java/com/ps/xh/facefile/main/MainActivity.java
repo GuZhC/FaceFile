@@ -68,6 +68,9 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
     private List<FileBean> mData;
     private LockFileAdapter adapter;
 
+    public static final int FILE_LOCK_0 = 0;
+    public static final int FILE_LOCK_1 = 1;
+    public static final int FILE_LOCK_2 = 2;
     @Override
     protected int addContentView() {
         return R.layout.activity_main;
@@ -111,10 +114,12 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             String fileName = FileUtils.getFileName(fileAbsolutePath);
             int dotIndex = fileName.lastIndexOf(".");
             String end = fileName.substring(dotIndex, fileName.length()).toLowerCase();
-            if (dotIndex < 0 || !TextUtils.equals(end, LockFileHelper.CIPHER_TEXT_SUFFIX)) {
-                fileBean.setLock(false);
+            if (TextUtils.equals(end, LockFileHelper.CIPHER_TEXT_SUFFIX)) {
+                fileBean.setIsLock(MainActivity.FILE_LOCK_1);
+            } else if (TextUtils.equals(end, LockFileHelper.CIPHER_TEXT_SUFFIX2)) {
+                fileBean.setIsLock(MainActivity.FILE_LOCK_2);
             } else {
-                fileBean.setLock(true);
+                fileBean.setIsLock(MainActivity.FILE_LOCK_0);
             }
             fileBean.setName(fileName);
             fileBean.setPath(fileAbsolutePath);
@@ -138,14 +143,14 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             @Override
             public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
                 final FileBean fileBean = mData.get(position);
-                if (fileBean.isLock()) {
+                if (fileBean.getIsLock() != 0) {
                     AlertDialog versionDialog =
                             new AlertDialog.Builder(MainActivity.this).setTitle("提示").setMessage(
                                     "是否解密？").setPositiveButton(getString(R.string.dolog_unlock_file),
                                     new DialogInterface.OnClickListener() {
                                         @Override
                                         public void onClick(DialogInterface dialog, int which) {
-                                            decryptFile(fileBean.getPath());
+                                            decryptFile(fileBean.getPath(), fileBean.getIsLock());
                                         }
                                     }).setNegativeButton(getString(R.string.dolog_lock_file_no),
                                     new DialogInterface.OnClickListener() {
@@ -163,7 +168,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                             new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    encryptFile(fileBean.getPath());
+                                    lockWat(fileBean.getPath());
                                 }
                             }).setNegativeButton(getString(R.string.dolog_look_file),
                             new DialogInterface.OnClickListener() {
@@ -186,13 +191,18 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
      * @param path
      * @return
      */
-    private void decryptFile(String path) {
+    private void decryptFile(String path, int watLock) {
+        if (watLock == FILE_LOCK_1) {
+            toast("方式一解密");
+        } else {
+            toast("方式二解密");
+        }
         showLoding();
         boolean isDecrypt = LockFileHelper.decrypt(path, new LockFileHelper.CipherListener() {
             @Override
             public void onProgress(long current, long total) {
             }
-        });
+        }, watLock);
         if (isDecrypt) {
             hideLoading();
             toast("解密成功");
@@ -209,9 +219,10 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
      * @param path
      * @return
      */
-    private void encryptFile(String path) {
+    private void encryptFile(String path, int watLock) {
+
         showLoding();
-        boolean isEncrypt = LockFileHelper.encrypt(path, new LockFileHelper.CipherListener() {
+        boolean isEncrypt = LockFileHelper.encrypt(watLock, path, new LockFileHelper.CipherListener() {
             @Override
             public void onProgress(long current, long total) {
             }
@@ -413,8 +424,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                         //  文件复制成功时，主线程回调
                         hideLoading();
                         //加密
-                        encryptFile(newFilePath);
-                        updateLockFile();
+                        lockWat(newFilePath);
                     }
 
                     @Override
@@ -424,6 +434,37 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                         hideLoading();
                     }
                 });
+    }
+
+    /**
+     * 加密方式
+     *
+     * @param newFilePath
+     */
+    private void lockWat(final String newFilePath) {
+        final String[] items = {"普通加密", "高级加密", "多重加密"};
+        AlertDialog.Builder listDialog =
+                new AlertDialog.Builder(MainActivity.this);
+        listDialog.setTitle("加密方式");
+        listDialog.setItems(items, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                switch (items[which]) {
+                    case "普通加密":
+                        updateLockFile();
+                        break;
+                    case "高级加密":
+                        encryptFile(newFilePath, FILE_LOCK_1);
+                        updateLockFile();
+                        break;
+                    case "多重加密":
+                        encryptFile(newFilePath, FILE_LOCK_2);
+                        updateLockFile();
+                        break;
+                }
+            }
+        });
+        listDialog.show();
     }
 
     @Override

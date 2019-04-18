@@ -3,6 +3,7 @@ package com.ps.xh.facefile.login;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.DialogInterface;
+import android.os.Environment;
 import android.support.design.widget.TextInputEditText;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
@@ -15,6 +16,7 @@ import com.ps.xh.facefile.R;
 import com.ps.xh.facefile.base.BaseActivity;
 import com.ps.xh.facefile.face.FaceAddActivity;
 import com.ps.xh.facefile.main.MainActivity;
+import com.ps.xh.facefile.utils.FileUtils;
 import com.ps.xh.facefile.utils.SPUtils;
 import com.tbruyelle.rxpermissions2.Permission;
 import com.tbruyelle.rxpermissions2.RxPermissions;
@@ -99,7 +101,7 @@ public class LoginActivity extends BaseActivity implements DialogInterface.OnDis
         versionDialog.show();
     }
 
-    @OnClick({R.id.rbLogin, R.id.rbRegister, R.id.btnServerLogin})
+    @OnClick({R.id.rbLogin, R.id.rbRegister, R.id.btnServerLogin,R.id.btnServerLoginFace})
     public void onViewClicked(View view) {
         switch (view.getId()) {
             case R.id.rbLogin:
@@ -107,6 +109,9 @@ public class LoginActivity extends BaseActivity implements DialogInterface.OnDis
                 break;
             case R.id.rbRegister:
                 setRbBg();
+                break;
+                case R.id.btnServerLoginFace:
+                toast("人脸识别");
                 break;
             case R.id.btnServerLogin:
                 String mPhone = phone.getText().toString().trim();
@@ -199,21 +204,31 @@ public class LoginActivity extends BaseActivity implements DialogInterface.OnDis
     private void loginSucess(UserBean userBean, String mPhone) {
         UserManager.getInstance().setUserBean(userBean);
         SPUtils.save(LoginActivity.this, "USER", "PHONE", mPhone);
-        if (userBean.getFaceUrl() != null&&userBean.getFaceUrl().size() >= 3) {
-            for (String url: userBean.getFaceUrl()) {
-                if (TextUtils.isEmpty(url)) {
-                    startAct(FaceAddActivity.class);
-                    finish();
-                    return;
-                }
-            }
-            startAct(MainActivity.class);
-            finish();
-        } else {
+        String  faceFile = Environment.getExternalStorageDirectory().toString() + "/faceFile/face";
+        FileUtils.createOrExistsDir( faceFile);
+        if (FileUtils.listFilesInDir(faceFile).size()<5){
             startAct(FaceAddActivity.class);
             finish();
+        }else {
+            startAct(MainActivity.class);
+            finish();
         }
-        finish();
+
+//        if (userBean.getFaceUrl() != null&&userBean.getFaceUrl().size() >= 3) {
+//            for (String url: userBean.getFaceUrl()) {
+//                if (TextUtils.isEmpty(url)) {
+//                    startAct(FaceAddActivity.class);
+//                    finish();
+//                    return;
+//                }
+//            }
+//            startAct(MainActivity.class);
+//            finish();
+//        } else {
+//            startAct(FaceAddActivity.class);
+//            finish();
+//        }
+//        finish();
     }
 
     /**
