@@ -25,7 +25,9 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.chad.library.adapter.base.BaseQuickAdapter;
+import com.jph.takephoto.model.TResult;
 import com.ps.xh.facefile.R;
 import com.ps.xh.facefile.base.BaseActivity;
 import com.ps.xh.facefile.face.FaceAddActivity;
@@ -60,6 +62,8 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
     LinearLayout llMainToolbar;
     @BindView(R.id.recycler_main)
     RecyclerView recyclerMain;
+    @BindView(R.id.img_main_takephoto)
+    TextView img_main_takephoto;
     private ArrayList<String> docPaths;
     private TextView name;
     private String LockPath;
@@ -347,7 +351,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         }
     }
 
-    @OnClick({R.id.img_main_menu, R.id.img_main_add, R.id.main_tv_chose})
+    @OnClick({R.id.img_main_menu, R.id.img_main_add, R.id.main_tv_chose, R.id.img_main_takephoto})
     public void onViewClicked(View view) {
         switch (view.getId()) {
             case R.id.img_main_menu:
@@ -359,9 +363,29 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             case R.id.main_tv_chose:
                 choseFile();
                 break;
+            case R.id.img_main_takephoto:
+                takePhto("/"+System.currentTimeMillis()+"pic.png");
+                break;
         }
     }
-
+    /**
+     * 拍照
+     *
+     * @param s
+     */
+    private void takePhto(String s) {
+        String mPaht = Environment.getExternalStorageDirectory().toString() + "/faceFile/lockFile" + s;
+        FileUtils.createOrExistsFile(mPaht);
+        File file = FileUtils.getFileByPath(mPaht);
+        Uri uri = Uri.fromFile(file);
+        getTakePhoto().onPickFromCapture(uri);
+    }
+    @Override
+    public void takeSuccess(TResult result) {
+        super.takeSuccess(result);
+        String originalPath = result.getImage().getOriginalPath();
+        lockWat(originalPath);
+    }
     /**
      * @return 根目录
      */
