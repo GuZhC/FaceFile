@@ -28,6 +28,7 @@ import android.widget.TextView;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.ps.xh.facefile.R;
 import com.ps.xh.facefile.base.BaseActivity;
+import com.ps.xh.facefile.face.FaceAddActivity;
 import com.ps.xh.facefile.login.LoginActivity;
 import com.ps.xh.facefile.utils.FileUtils;
 import com.ps.xh.facefile.utils.SPUtils;
@@ -328,7 +329,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                 choseFile();
                 return true;
             case R.id.navItemface:
-                toast("navItemface");
+                startAct(FaceAddActivity.class);
                 return true;
             default:
                 return false;

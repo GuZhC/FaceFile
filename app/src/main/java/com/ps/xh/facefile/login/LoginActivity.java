@@ -13,14 +13,18 @@ import android.widget.RadioButton;
 
 import com.ps.xh.facefile.R;
 import com.ps.xh.facefile.base.BaseActivity;
+import com.ps.xh.facefile.face.FaceAddActivity;
 import com.ps.xh.facefile.main.MainActivity;
 import com.ps.xh.facefile.utils.SPUtils;
 import com.tbruyelle.rxpermissions2.Permission;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import butterknife.BindView;
 import butterknife.OnClick;
-import cn.bmob.v3.BmobUser;
+import cn.bmob.v3.datatype.BmobFile;
 import cn.bmob.v3.exception.BmobException;
 import cn.bmob.v3.listener.SaveListener;
 import io.reactivex.functions.Consumer;
@@ -132,13 +136,18 @@ public class LoginActivity extends BaseActivity implements DialogInterface.OnDis
      * @param mPsd
      */
     private void register(String mPhone, String mPsd) {
-        final BmobUser user = new BmobUser();
+        final UserBean user = new UserBean();
         user.setUsername(mPhone);
         user.setPassword(mPsd);
+        List<String> url = new ArrayList<>();
+        url.add("");
+        url.add("");
+        url.add("");
+        user.setFaceUrl(url);
         showLoding();
-        user.signUp(new SaveListener<BmobUser>() {
+        user.signUp(new SaveListener<UserBean>() {
             @Override
-            public void done(BmobUser user, BmobException e) {
+            public void done(UserBean user, BmobException e) {
                 hideLoading();
                 if (e == null) {
                     toast("注册成功");
@@ -161,21 +170,18 @@ public class LoginActivity extends BaseActivity implements DialogInterface.OnDis
      * @param mPsd
      */
     private void login(final String mPhone, String mPsd) {
-        final BmobUser user = new BmobUser();
+        final UserBean user = new UserBean();
         //此处替换为你的用户名
         user.setUsername(mPhone);
         //此处替换为你的密码
         user.setPassword(mPsd);
         showLoding();
-        user.login(new SaveListener<BmobUser>() {
+        user.login(new SaveListener<UserBean>() {
             @Override
-            public void done(BmobUser bmobUser, BmobException e) {
+            public void done(UserBean userBean, BmobException e) {
                 hideLoading();
                 if (e == null) {
-                    BmobUser user = BmobUser.getCurrentUser(BmobUser.class);
-                    SPUtils.save(LoginActivity.this, "USER", "PHONE", mPhone);
-                    startAct(MainActivity.class);
-                    finish();
+                    loginSucess(userBean, mPhone);
                 } else if (e.getErrorCode() == 101) {
                     toast("帐号或密码错误");
                 } else {
@@ -183,6 +189,31 @@ public class LoginActivity extends BaseActivity implements DialogInterface.OnDis
                 }
             }
         });
+    }
+
+    /**
+     * 登录成功
+     * @param userBean
+     * @param mPhone
+     */
+    private void loginSucess(UserBean userBean, String mPhone) {
+        UserManager.getInstance().setUserBean(userBean);
+        if (userBean.getFaceUrl() != null&&userBean.getFaceUrl().size() >= 3) {
+            for (String url: userBean.getFaceUrl()) {
+                if (TextUtils.isEmpty(url)) {
+                    startAct(FaceAddActivity.class);
+                    finish();
+                    return;
+                }
+            }
+            startAct(MainActivity.class);
+            finish();
+        } else {
+            startAct(FaceAddActivity.class);
+            finish();
+        }
+        SPUtils.save(LoginActivity.this, "USER", "PHONE", mPhone);
+        finish();
     }
 
     /**
