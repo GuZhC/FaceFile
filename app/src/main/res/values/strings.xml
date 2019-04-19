@@ -93,4 +93,5 @@
     <string name="dolog_lock_file_no">取消</string>
     <string name="dolog_lock_file_sure">确定</string>
     <string name="dolog_unlock_file">解密</string>
+    <string name="dolog_unlock_file_takepic">拍照</string>
 </resources>

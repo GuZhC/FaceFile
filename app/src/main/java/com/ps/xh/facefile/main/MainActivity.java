@@ -25,12 +25,19 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
 import com.chad.library.adapter.base.BaseQuickAdapter;
+import com.google.gson.Gson;
+import com.jph.takephoto.app.TakePhoto;
+import com.jph.takephoto.compress.CompressConfig;
 import com.jph.takephoto.model.TResult;
+import com.lzy.okgo.OkGo;
+import com.lzy.okgo.callback.StringCallback;
+import com.lzy.okgo.model.Progress;
+import com.lzy.okgo.model.Response;
 import com.ps.xh.facefile.R;
 import com.ps.xh.facefile.base.BaseActivity;
 import com.ps.xh.facefile.face.FaceAddActivity;
+import com.ps.xh.facefile.http.ComperBean;
 import com.ps.xh.facefile.login.LoginActivity;
 import com.ps.xh.facefile.utils.FileUtils;
 import com.ps.xh.facefile.utils.SPUtils;
@@ -72,9 +79,20 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
     private List<FileBean> mData;
     private LockFileAdapter adapter;
 
+    public static final int TAKE_PHTO_FACE = 0;
+    public static final int TAKE_PHTO_FILE = 1;
     public static final int FILE_LOCK_0 = 0;
     public static final int FILE_LOCK_1 = 1;
     public static final int FILE_LOCK_2 = 2;
+    private int unLockFace =1;
+    private int takePhtoWat = TAKE_PHTO_FILE;
+    private String pathroot;
+    private String faceValidation;
+    private int watLock;
+    private String watUnLockPath;
+    private int faceValidationNum = 0;
+    private int lastFaceId = 1;
+
     @Override
     protected int addContentView() {
         return R.layout.activity_main;
@@ -82,6 +100,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
 
     @Override
     protected void initView() {
+        pathroot = Environment.getExternalStorageDirectory().toString();
         setupNavMenu();
         initLockFile();
     }
@@ -137,7 +156,8 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         //长按
         adapter.setOnItemLongClickListener(new BaseQuickAdapter.OnItemLongClickListener() {
             @Override
-            public boolean onItemLongClick(BaseQuickAdapter adapter, View view, final int position) {
+            public boolean onItemLongClick(BaseQuickAdapter adapter, View view,
+                                           final int position) {
                 hintDeleat(position);
                 return false;
             }
@@ -154,7 +174,9 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                                     new DialogInterface.OnClickListener() {
                                         @Override
                                         public void onClick(DialogInterface dialog, int which) {
-                                            decryptFile(fileBean.getPath(), fileBean.getIsLock());
+                                            watLock = fileBean.getIsLock();
+                                            watUnLockPath = fileBean.getPath();
+                                            sohwValidationDialog();
                                         }
                                     }).setNegativeButton(getString(R.string.dolog_lock_file_no),
                                     new DialogInterface.OnClickListener() {
@@ -168,19 +190,19 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                 } else {
                     AlertDialog versionDialog =
                             new AlertDialog.Builder(MainActivity.this).setTitle("提示").setMessage(
-                            "请选择要进行的操作。").setPositiveButton(getString(R.string.dolog_lock_file),
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    lockWat(fileBean.getPath());
-                                }
-                            }).setNegativeButton(getString(R.string.dolog_look_file),
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    openFile(MainActivity.this, fileBean.getPath());
-                                }
-                            }).create();
+                                    "请选择要进行的操作。").setPositiveButton(getString(R.string.dolog_lock_file),
+                                    new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            lockWat( fileBean.getPath());
+                                        }
+                                    }).setNegativeButton(getString(R.string.dolog_look_file),
+                                    new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            openFile(MainActivity.this, fileBean.getPath());
+                                        }
+                                    }).create();
                     versionDialog.setCanceledOnTouchOutside(true);
                     versionDialog.setCancelable(true);
                     versionDialog.show();
@@ -193,14 +215,9 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
      * 解密
      *
      * @param path
-     * @return
+     * @param watLock
      */
     private void decryptFile(String path, int watLock) {
-        if (watLock == FILE_LOCK_1) {
-            toast("方式一解密");
-        } else {
-            toast("方式二解密");
-        }
         showLoding();
         boolean isDecrypt = LockFileHelper.decrypt(path, new LockFileHelper.CipherListener() {
             @Override
@@ -218,15 +235,63 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
     }
 
     /**
+     * 显示解密弹窗
+     */
+    private void sohwValidationDialog() {
+        while (lastFaceId == unLockFace){
+            unLockFace = (int) (1 + Math.random() * (5 - 1 + 1));
+        }
+        lastFaceId =unLockFace;
+        String hint = "拍一个正常的表情";
+        faceValidation = pathroot+ "/faceFile/face/normal.png";
+        switch (unLockFace) {
+            case 1:
+                hint = "拍一个高兴的表情";
+                faceValidation = pathroot+ "/faceFile/face/happy.png";
+                break;
+            case 2:
+                hint = "拍一个伤心的表情";
+                faceValidation = pathroot+ "/faceFile/face/sad.png";
+                break;
+            case 3:
+                hint = "拍一个平静的表情";
+                faceValidation = pathroot+ "/faceFile/face/normal.png";
+                break;
+            case 4:
+                hint = "拍一个惊讶的表情";
+                faceValidation = pathroot+ "/faceFile/face/face4.png";
+                break;
+            case 5:
+                hint = "拍一个愤怒的表情";
+                faceValidation = pathroot+ "/faceFile/face/face5.png";
+                break;
+        }
+        AlertDialog versionDialog =
+                new AlertDialog.Builder(MainActivity.this).setTitle("解密提示").setMessage(
+                        hint).setPositiveButton(getString(R.string.dolog_unlock_file_takepic),
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                takePhtoWat = TAKE_PHTO_FACE;
+                               takePhto(pathroot + "/faceFile/other"+"/" + System.currentTimeMillis() + "pic.png");
+                            }
+                        }).setNegativeButton(getString(R.string.dolog_lock_file_no),
+                        null).create();
+
+        versionDialog.show();
+    }
+
+    /**
      * 加密
      *
      * @param path
      * @return
      */
     private void encryptFile(String path, int watLock) {
-
+this.watLock = watLock;
         showLoding();
-        boolean isEncrypt = LockFileHelper.encrypt(watLock, path, new LockFileHelper.CipherListener() {
+        boolean isEncrypt = LockFileHelper.encrypt(watLock, path,
+                new LockFileHelper.CipherListener() {
             @Override
             public void onProgress(long current, long total) {
             }
@@ -250,22 +315,22 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
     private void hintDeleat(final int position) {
         AlertDialog versionDialog =
                 new AlertDialog.Builder(MainActivity.this).setTitle("删除").setMessage(
-                "确定删除？").setPositiveButton(getString(R.string.dolog_lock_file_sure),
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (FileUtils.delete(mData.get(position).getPath())) {
-                            updateLockFile();
-                        } else {
-                            toast("删除失败");
-                        }
-                    }
-                }).setNegativeButton(getString(R.string.dolog_lock_file_no),
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                    }
-                }).create();
+                        "确定删除？").setPositiveButton(getString(R.string.dolog_lock_file_sure),
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                if (FileUtils.delete(mData.get(position).getPath())) {
+                                    updateLockFile();
+                                } else {
+                                    toast("删除失败");
+                                }
+                            }
+                        }).setNegativeButton(getString(R.string.dolog_lock_file_no),
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        }).create();
         versionDialog.setCanceledOnTouchOutside(true);
         versionDialog.setCancelable(true);
         versionDialog.show();
@@ -364,28 +429,91 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                 choseFile();
                 break;
             case R.id.img_main_takephoto:
-                takePhto("/"+System.currentTimeMillis()+"pic.png");
+                takePhtoWat = TAKE_PHTO_FILE;
+                takePhto( pathroot + "/faceFile/lockFile"+"/" + System.currentTimeMillis() + "pic.png");
                 break;
         }
     }
+
     /**
      * 拍照
      *
-     * @param s
      */
-    private void takePhto(String s) {
-        String mPaht = Environment.getExternalStorageDirectory().toString() + "/faceFile/lockFile" + s;
+    private void takePhto(String mPaht) {
         FileUtils.createOrExistsFile(mPaht);
         File file = FileUtils.getFileByPath(mPaht);
         Uri uri = Uri.fromFile(file);
-        getTakePhoto().onPickFromCapture(uri);
+        TakePhoto takePhoto = getTakePhoto();
+        takePhoto.onEnableCompress(new
+                        CompressConfig.Builder().setMaxSize(500 * 1024).setMaxPixel(1000).create(),
+                true);
+        takePhoto.onPickFromCapture(uri);
     }
+
     @Override
     public void takeSuccess(TResult result) {
         super.takeSuccess(result);
         String originalPath = result.getImage().getOriginalPath();
-        lockWat(originalPath);
+        String compressPath = result.getImage().getCompressPath();
+        if (takePhtoWat == TAKE_PHTO_FILE){
+            lockWat(originalPath);
+        }
+        if (takePhtoWat == TAKE_PHTO_FACE){
+            faceValidation(compressPath);
+        }
     }
+
+    /**
+     * 人脸验证
+     * @param compressPath
+     */
+    private void faceValidation(String compressPath) {
+        showLoding();
+        OkGo.<String>post("https://api-cn.faceplusplus.com/facepp/v3/compare")
+                .tag(this)
+                .params("image_file1", new File(compressPath))
+                .params("image_file2", new File(faceValidation))
+                .execute(new StringCallback() {
+                    /**
+                     * @param response
+                     */
+                    @Override
+                    public void onSuccess(Response<String> response) {
+                        hideLoading();
+                        Log.d("detect", "onSuccess: " + response.body());
+                        Gson gson = new Gson();
+                        ComperBean comperBean = gson.fromJson(response.body(), ComperBean.class);
+                        if (comperBean.getConfidence()<94.0){
+                            toast("面部匹配不成功");
+                            return;
+                        }
+                        if (watLock == FILE_LOCK_1) {
+                            decryptFile(watUnLockPath,watLock);
+                        } else {
+                            faceValidationNum++;
+                            if (faceValidationNum>=2){
+                                decryptFile(watUnLockPath,watLock);
+                                faceValidationNum =0;
+                            }else {
+                                sohwValidationDialog();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onError(Response<String> response) {
+                        toast("识别错误，请重试");
+                        hideLoading();
+                        Log.d("detect", "onError: " + response.body());
+                    }
+
+                    @Override
+                    public void uploadProgress(Progress progress) {
+                        System.out.println("uploadProgress: " + progress);
+                    }
+                });
+    }
+
     /**
      * @return 根目录
      */

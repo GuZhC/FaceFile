@@ -268,7 +268,6 @@ public class FaceAddActivity extends BaseActivity {
                         CompressConfig.Builder().setMaxSize(500 * 1024).setMaxPixel(1000).create(),
                 true);
         takePhoto.onPickFromCapture(uri);
-
     }
 
     /**

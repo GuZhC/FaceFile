@@ -3,6 +3,7 @@ package com.ps.xh.facefile.login;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.DialogInterface;
+import android.net.Uri;
 import android.os.Environment;
 import android.support.design.widget.TextInputEditText;
 import android.support.v7.app.AlertDialog;
@@ -12,15 +13,28 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.RadioButton;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.google.gson.Gson;
+import com.jph.takephoto.app.TakePhoto;
+import com.jph.takephoto.compress.CompressConfig;
+import com.jph.takephoto.model.TResult;
+import com.lzy.okgo.OkGo;
+import com.lzy.okgo.callback.StringCallback;
+import com.lzy.okgo.model.Progress;
+import com.lzy.okgo.model.Response;
 import com.ps.xh.facefile.R;
 import com.ps.xh.facefile.base.BaseActivity;
 import com.ps.xh.facefile.face.FaceAddActivity;
+import com.ps.xh.facefile.http.ComperBean;
+import com.ps.xh.facefile.http.DetectBeen;
 import com.ps.xh.facefile.main.MainActivity;
 import com.ps.xh.facefile.utils.FileUtils;
 import com.ps.xh.facefile.utils.SPUtils;
 import com.tbruyelle.rxpermissions2.Permission;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,6 +58,7 @@ public class LoginActivity extends BaseActivity implements DialogInterface.OnDis
     TextInputEditText etPassword;
     @BindView(R.id.btnServerLogin)
     Button btnServerLogin;
+    private String faceFile;
 
 
     @Override
@@ -54,6 +69,8 @@ public class LoginActivity extends BaseActivity implements DialogInterface.OnDis
     @Override
     protected void initView() {
         addPermission();
+        faceFile = Environment.getExternalStorageDirectory().toString() + "/faceFile/face";
+
         String readPhone = SPUtils.read(LoginActivity.this, "USER", "PHONE");
         if (!TextUtils.isEmpty(readPhone)) {
             phone.setText(readPhone);
@@ -111,7 +128,11 @@ public class LoginActivity extends BaseActivity implements DialogInterface.OnDis
                 setRbBg();
                 break;
                 case R.id.btnServerLoginFace:
-                toast("人脸识别");
+                    if (FileUtils.isFileExists(faceFile+"/normal.png")){
+                        takePhto();
+                    }else {
+                        toast("没有可识别图片");
+                    }
                 break;
             case R.id.btnServerLogin:
                 String mPhone = phone.getText().toString().trim();
@@ -168,6 +189,52 @@ public class LoginActivity extends BaseActivity implements DialogInterface.OnDis
         });
     }
 
+    @Override
+    public void takeSuccess(TResult result) {
+        super.takeSuccess(result);
+        showLoding();
+        OkGo.<String>post("https://api-cn.faceplusplus.com/facepp/v3/compare")
+                .tag(this)
+                .params("image_file1", new File(result.getImage().getCompressPath()))
+                .params("image_file2", new File(faceFile+"/normal.png"))
+                .execute(new StringCallback() {
+                    /**
+                     * @param response
+                     */
+                    @Override
+                    public void onSuccess(Response<String> response) {
+                        hideLoading();
+                        Log.d("detect", "onSuccess: " + response.body());
+                        Gson gson = new Gson();
+                        ComperBean comperBean = gson.fromJson(response.body(), ComperBean.class);
+                        if (comperBean.getConfidence()<90.0){
+                            toast("面部匹配不成功");
+                            return;
+                        }
+                        FileUtils.createOrExistsDir(faceFile);
+                        if (FileUtils.listFilesInDir(faceFile).size()<5){
+                            startAct(FaceAddActivity.class);
+                            finish();
+                        }else {
+                            startAct(MainActivity.class);
+                            finish();
+                        }
+                    }
+
+                    @Override
+                    public void onError(Response<String> response) {
+                        toast("识别错误，请重试");
+                        hideLoading();
+                        Log.d("detect", "onError: " + response.body());
+                    }
+
+                    @Override
+                    public void uploadProgress(Progress progress) {
+                        System.out.println("uploadProgress: " + progress);
+                    }
+                });
+    }
+
     /**
      * 登录
      *
@@ -204,8 +271,7 @@ public class LoginActivity extends BaseActivity implements DialogInterface.OnDis
     private void loginSucess(UserBean userBean, String mPhone) {
         UserManager.getInstance().setUserBean(userBean);
         SPUtils.save(LoginActivity.this, "USER", "PHONE", mPhone);
-        String  faceFile = Environment.getExternalStorageDirectory().toString() + "/faceFile/face";
-        FileUtils.createOrExistsDir( faceFile);
+        FileUtils.createOrExistsDir(faceFile);
         if (FileUtils.listFilesInDir(faceFile).size()<5){
             startAct(FaceAddActivity.class);
             finish();
@@ -249,5 +315,22 @@ public class LoginActivity extends BaseActivity implements DialogInterface.OnDis
     @Override
     public void onDismiss(DialogInterface dialog) {
         finish();
+    }
+
+
+    /**
+     * 拍照
+     *
+     */
+    private void takePhto() {
+        String mPaht =  Environment.getExternalStorageDirectory().toString() + "/faceFile/other/" + System.currentTimeMillis()+".png";
+        FileUtils.createOrExistsFile(mPaht);
+        File file = FileUtils.getFileByPath(mPaht);
+        Uri uri = Uri.fromFile(file);
+        TakePhoto takePhoto = getTakePhoto();
+        takePhoto.onEnableCompress(new
+                        CompressConfig.Builder().setMaxSize(500 * 1024).setMaxPixel(1000).create(),
+                true);
+        takePhoto.onPickFromCapture(uri);
     }
 }
