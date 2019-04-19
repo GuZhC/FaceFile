@@ -10,9 +10,17 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.google.gson.Gson;
+import com.jph.takephoto.app.TakePhoto;
+import com.jph.takephoto.compress.CompressConfig;
 import com.jph.takephoto.model.TResult;
+import com.lzy.okgo.OkGo;
+import com.lzy.okgo.callback.StringCallback;
+import com.lzy.okgo.model.Progress;
+import com.lzy.okgo.model.Response;
 import com.ps.xh.facefile.R;
 import com.ps.xh.facefile.base.BaseActivity;
+import com.ps.xh.facefile.http.DetectBeen;
 import com.ps.xh.facefile.login.UserBean;
 import com.ps.xh.facefile.login.UserManager;
 import com.ps.xh.facefile.main.MainActivity;
@@ -93,7 +101,8 @@ public class FaceAddActivity extends BaseActivity {
 //        if (userFace.size() > 0) {
 //            for (int i = 0; i < 3; i++) {
 //                if (!TextUtils.isEmpty(userFace.get(i))){
-//                    Glide.with(this).load(userFace.get(i)).placeholder(R.mipmap.pic_ing).into(imageViews.get(i));
+//                    Glide.with(this).load(userFace.get(i)).placeholder(R.mipmap.pic_ing).into
+// (imageViews.get(i));
 //                }
 //            }
 //        }
@@ -139,8 +148,8 @@ public class FaceAddActivity extends BaseActivity {
                 break;
             case R.id.tv_addface_save:
                 if (FileUtils.listFilesInDir(faceFile).size() < 5) {
-                  toast("请上传全部表情");
-                }else {
+                    toast("请上传全部表情");
+                } else {
                     startAct(MainActivity.class);
                     finish();
                 }
@@ -149,13 +158,98 @@ public class FaceAddActivity extends BaseActivity {
     }
 
 
-
     @Override
     public void takeSuccess(TResult result) {
         super.takeSuccess(result);
         String originalPath = result.getImage().getOriginalPath();
-        Glide.with(this).load(originalPath).error(R.mipmap.icon_face_add).into(imageViews.get(wht));
+        String compressPath = result.getImage().getCompressPath();
+        Log.d("detect", "onSuccess: " + originalPath + "||" + compressPath);
+        FileUtils.moveFile(compressPath, originalPath);
+//        FileUtils.deleteFile(originalPath);
+        Glide.with(this).load(originalPath).error(R.mipmap.icon_face_add).diskCacheStrategy(DiskCacheStrategy.NONE)
+                .skipMemoryCache(true).into(imageViews.get(wht));
+        getDetect(originalPath);
 //        postFile(originalPath);
+    }
+
+    /**
+     * 照片识别
+     */
+    public void getDetect(final String path) {
+        showLoding();
+        OkGo.<String>post("https://api-cn.faceplusplus.com/facepp/v3/detect")
+                .tag(this)
+                .params("return_attributes", "emotion")
+                .params("image_file", new File(path))
+                .params("beauty_score_max",100)
+                .execute(new StringCallback() {
+                    /**
+                     * @param response
+                     */
+                    @Override
+                    public void onSuccess(Response<String> response) {
+                        hideLoading();
+                        Gson gson = new Gson();
+                        DetectBeen detectBeen = gson.fromJson(response.body(), DetectBeen.class);
+                        List<DetectBeen.FacesBean> faces = detectBeen.getFaces();
+                        if (faces.size()==0){
+                            toast("未识别到表情");
+                            FileUtils.deleteFile(path);
+                            Glide.with(FaceAddActivity.this).load(path).error(R.mipmap.icon_face_add).diskCacheStrategy(DiskCacheStrategy.NONE)
+                                    .skipMemoryCache(true).into(imageViews.get(wht));
+                            return;
+                        }
+                        Log.d("detect", "onSuccess: " + response.body());
+                        switch (wht) {
+                            case 0:
+                                faceIsOk(path, "表情不够高兴，再来一次吧", faces.get(0).getAttributes().getEmotion().getHappiness()) ;
+                                break;
+                            case 1:
+                                faceIsOk(path, "表情不够伤心，再来一次吧", faces.get(0).getAttributes().getEmotion().getSadness());
+                                break;
+                            case 2:
+                                faceIsOk(path, "表情不够平静，再来一次吧", faces.get(0).getAttributes().getEmotion().getNeutral());
+                                break;
+                            case 3:
+                                faceIsOk(path, "表情不够惊讶，再来一次吧", faces.get(0).getAttributes().getEmotion().getSurprise());
+                                break;
+                            case 4:
+                                faceIsOk(path, "表情不够愤怒，再来一次吧", faces.get(0).getAttributes().getEmotion().getAnger());
+                                break;
+                        }
+                    }
+
+                    @Override
+                    public void onError(Response<String> response) {
+                        toast("检测失败，请重试");
+                        hideLoading();
+                        Log.d("detect", "onError: " + response.body());
+                    }
+
+                    @Override
+                    public void uploadProgress(Progress progress) {
+                        System.out.println("uploadProgress: " + progress);
+                    }
+                });
+
+    }
+
+    /**
+     * 表情是否正确
+     * @param path
+     * @param s
+     * @param happiness
+     * @return
+     */
+    private boolean faceIsOk(String path, String s, double happiness) {
+        if (happiness < 40.0f) {
+            toast(s);
+            FileUtils.deleteFile(path);
+            Glide.with(FaceAddActivity.this).load(path).error(R.mipmap.icon_face_add).diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .skipMemoryCache(true).into(imageViews.get(wht));
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -165,10 +259,16 @@ public class FaceAddActivity extends BaseActivity {
      */
     private void takePhto(String s) {
         String mPaht = faceFile + s;
+        FileUtils.deleteFile(mPaht);
         FileUtils.createOrExistsFile(mPaht);
         File file = FileUtils.getFileByPath(mPaht);
         Uri uri = Uri.fromFile(file);
-        getTakePhoto().onPickFromCapture(uri);
+        TakePhoto takePhoto = getTakePhoto();
+        takePhoto.onEnableCompress(new
+                        CompressConfig.Builder().setMaxSize(500 * 1024).setMaxPixel(1000).create(),
+                true);
+        takePhoto.onPickFromCapture(uri);
+
     }
 
     /**

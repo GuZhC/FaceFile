@@ -80,7 +80,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:layout_marginBottom="6dp"
-                android:text="开怀大笑"
+                android:text="高兴"
                 android:textColor="@color/black"
                 android:textSize="16sp" />
 
@@ -110,7 +110,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:layout_marginBottom="6dp"
-                android:text="欲哭无泪"
+                android:text="伤心"
                 android:textColor="@color/black"
                 android:textSize="16sp" />
 
@@ -140,7 +140,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:layout_marginBottom="6dp"
-                android:text="心平气和"
+                android:text="平静"
                 android:textColor="@color/black"
                 android:textSize="16sp" />
 
@@ -169,7 +169,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:layout_marginBottom="6dp"
-                android:text="心平气和"
+                android:text="惊讶"
                 android:textColor="@color/black"
                 android:textSize="16sp" />
 
@@ -198,7 +198,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:layout_marginBottom="6dp"
-                android:text="心平气和"
+                android:text="愤怒"
                 android:textColor="@color/black"
                 android:textSize="16sp" />
 
